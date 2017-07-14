@@ -1,0 +1,60 @@
+1. 复合索引(mac,packageName)-> select mac from xxx where package_name='xx'不生效
+   数据分布很大(比如70%以上)，用index scan 已经没有意义了，因为数据太多了。所以就不如用 全表扫描了。
+   数据分布较小(比如 1.7%)，则用 bitmap index scan。
+   数据更少的时候，用的是 index scan。
+
+需要引起注意的是， bitmap index 也可以用在where 条件单一的时候。
+2. postgresql命令行操作数据库
+   2.1 psql -U user -p 端口 -d db -f fileName
+   2.2 select pg_size_pretty(pg_relation_size('installed_app'));来查看表占用大小
+   2.3 SET search_path TO myschema;切换模式
+   2.4 \d table_name可以查看表结构、\c db_name可以连接数据库 、 \di index_name可以查看索引
+   2.5 show enable_seqscan;可查询某个参数的值
+   2.6 set enable_seqscan = false;可将seqscan策略删除
+   2.7 pgsql --version可以查看Postgresql的版本
+3. 由于login_log没有加上索引，所以导致cpu的使用率一直很高(以后在模块开发时，要多考虑整个表的数据情况及)
+   3.1 由于checkLogin在记录日志的时候，往login_log中一直插入记录
+   3.2 一方面由于login_log的login_token没有加上索引，导致select的过程占用cpu过高
+
+
+4. 这次3.8迭代总共在线上发现了以下几个问题
+   4.1 软件详情页，获取推荐软件的时候；由于installed_app的记录存在500w，没有使用索引搜索时，会将数据表的记录直接在数据库中搜索，
+这样子必然导致数据库加载慢(在500w条中做检索)
+   4.2 添加用户，用户名存在却没有返回将错误信息。在更改代码的时候，不小心将原来的代码删除引入。
+   4.3 由于login_log在checkLogin，也会往login_log的表中新增checkLogin在记录日志的时候，往login_log中一直插入记录。数据条数增加，而且访问量在上增，就跟第一个问题一样
+   4.4 把之前可用的httpClient的连接池的数量关闭。可能引起ams->pmc的访问瓶颈
+
+5. 对installed_app新增了冗余字段package_names(存储用户的包名)，引起表的剧增，从625M增加至2850M
+   5.1 于是拆出一张新表installed_app2，只有ws_id、mac、package_names
+   5.2 拆出一张新表installed_app3，有ws_id、mac、package_names、package_hashes(用于存放包名的hash数组)，使用int[]
+   5.3 SELECT s.token as packageName,count(1) as installCount
+FROM   installed_app3 t, unnest(string_to_array(t.package_names, ',')) s(token)
+where 627963935=ANY(package_hashes)
+group by packageName
+       unneset将数组拆成多条记录。本来是想hash的整形比较有没有比较快，结果并没有
+       使用了gin索引，针对app3的package_hashes，然后使用了@>表示包含，但是速度并没有提升，反而降低
+   5.4 新建了installed_app5表，字段为id、ws_id、mac、package_names(varchar[]数组)，并创建了gin索引再package_names
+       使用查询select count(package_names) from installed_app5 where package_names && '{xxxx}'::varchar[]
+       5.4.1 在xxx的条数大于18w，总记录在30w,并没有采用索引，而是使用seq scan
+       5.4.2
+
+
+6. 其余一些sql排查
+   6.1 alter table drop constraint if exists xxx; 删除约束
+
+
+7. explain的分析
+   7.1 Seq Scan on hisp_pop
+         (cost=0.00..33.48 rows=1 width=16)
+         (actual time=0.205..0.339 rows=1 loops=1)
+         Filter: ((tract_id)::text = '25025010103'::text)
+         Rows Removed by Filter: 1477
+       第一个0.00，启动加载预估(estimated)时间，比如扫描索引(indexes)、连接表等时间花费
+       第二个33.48, 则是总花费预估时间
+       Rows Removed by Filter: 1477：在输出前总搜索的行数
+
+   7.2 在查找慢查询的排查中，可将postgresql中的pg_stat_statements开启
+       在postresql.conf中
+       shared_preload_libraries = 'pg_stat_statements'
+       pg_stat_statements.max = 10000
+       pg_stat_statements.track = all
