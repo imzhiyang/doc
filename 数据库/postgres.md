@@ -63,3 +63,8 @@ grant select on table in schema xx to user;
     5. 其它同第一种方法
 
 之前的错误尝试，如果一个backup，被启动之后，就会指定了还原点，这时候即使再修改recover.conf，也是无法生效的。必须重新弄一个新的backup，因为还原的时间点是不可逆的
+
+### 流复制
+    同备份与还原，
+    主服务器：开启wal日志和wal_senders
+    备服务器：recover.conf中新增primary_conninfo=..和standby = 'on'然后配置postgresql.conf中的hot_standBy=on
