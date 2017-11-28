@@ -68,3 +68,6 @@ grant select on table in schema xx to user;
     同备份与还原，
     主服务器：开启wal日志和wal_senders
     备服务器：recover.conf中新增primary_conninfo=..和standby = 'on'然后配置postgresql.conf中的hot_standBy=on
+
+### 对于bitmap index的搜索。
+    1. 提到了为了防止随机读取的耗费时间，所以采用将Bitmap index取出的索引顺序的记录并排序(这里应该指的是记录的位置)，然后从开始位置到结束位置，读取对应的记录，从而获得结果集
