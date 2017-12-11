@@ -70,4 +70,7 @@ grant select on table in schema xx to user;
     备服务器：recover.conf中新增primary_conninfo=..和standby = 'on'然后配置postgresql.conf中的hot_standBy=on
 
 ### 对于bitmap index的搜索。
-    1. 提到了为了防止随机读取的耗费时间，所以采用将Bitmap index取出的索引顺序的记录并排序(这里应该指的是记录的位置)，然后从开始位置到结束位置，读取对应的记录，从而获得结果集
+    1. 提到了为了防止随机读取的耗费时间，所以采用将Bitmap index取出的索引顺序的记录并排序(这里应该指的是记录的位置)，然后再顺序读取，从而获得结果集
+
+### 将数组变成多条记录输出，而不是一个字段。
+    select id, unnest(string_to_array(bind_ids, ',')) as bind_id from account where id=502153;// 将这条account记录的bind_ids，按逗号隔开，然后多条输出
