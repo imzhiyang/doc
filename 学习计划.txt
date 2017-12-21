@@ -1,0 +1,4 @@
+先学习分布式数据库。shared-jdbc.
+
+
+hadoop、hbase、flume、zookeeper、kafka、netty

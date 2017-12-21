@@ -74,3 +74,7 @@ grant select on table in schema xx to user;
 
 ### 将数组变成多条记录输出，而不是一个字段。
     select id, unnest(string_to_array(bind_ids, ',')) as bind_id from account where id=502153;// 将这条account记录的bind_ids，按逗号隔开，然后多条输出
+
+### select '\"drm\":\"2\"' ~ '\"drm\":\"2\"'结果为false
+    由于\"在正则表达式中只是作为一个转义，所以在~的字符串变成是'"drm":"2"'的这样匹配。
+    而数据库\"drm\":\"2\"是一个单独的字符串
