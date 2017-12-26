@@ -88,3 +88,20 @@ grant select on table in schema xx to user;
     因此经过update之后，索引是直接重新插入一条，并将原来的数据做出偏移
     问题：如果我现在没有更新索引字段的话，会不会触发呢?
     6. 会的。情况与上述情况一样
+### bt_page_items中的data是什么值
+    比如select * from bt_page_items('idx_test_plays', 2);得出的记录中，后面都有个data,
+    1. 如果data为空，代表当前没有右链，否则这条的ctid代表右链的值
+    01 00 00 00 00 00 00 00：为1
+    00 01 00 00 00 00 00 00：256就是01*256
+    00 10 00 00 00 00 00 00：256*16*1
+### 针对上次并发update video set plays=case when plays is null then 0 else plays end + 1 where id=1000的死锁分析
+    1. 在postgresql中，没有U锁，也就是更新锁，所以在更新的时候，会先获取share，也就是读记录的锁，接着再去获取排他锁。这就造成死锁的关键原因；
+    2. 事务1：获取了share锁，然后准备获取排他锁，需等事务2的share锁释放
+    3. 事务2：获取了share锁，然后准备获取排他锁，需等事务1的share锁释放
+### 数据库锁的分析
+    table test(id bigint pk, plays int);
+    idx_test_plays on test(plays)建立索引
+    1. select * from test where id =1 for update
+    分析：1.1 获取索引pk_test的id=1的AccessShare的锁
+         1.2 获取表test的的id=1的RowShare锁
+         1.3 获取该条记录tuple的For Update行锁
