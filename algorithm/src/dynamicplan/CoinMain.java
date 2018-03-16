@@ -134,10 +134,11 @@ public class CoinMain {
         }
         boolean first = true;
         int size = 0;
+        List<Coin> copyCoins = copy(coins, value);
         List<List<Coin>> tmpCoinPlans = new LinkedList<List<Coin>>();
-        for (Coin coin : coins) {
-            List<Coin> copyCoins = copy(coins, value);
-            Iterator<Coin> it = copyCoins.iterator();
+        for (Coin coin : copyCoins) {
+            List<Coin> tmpCoinPoints = copy(coins, value);
+            Iterator<Coin> it = tmpCoinPoints.iterator();
             while (it.hasNext()) {
                 Coin tmp = it.next();
                 if (tmp.value == coin.value) {
@@ -152,7 +153,7 @@ public class CoinMain {
             int nextValue = value - coin.value;
             List<List<Coin>> tmpNextCoins = new LinkedList<List<Coin>>();
             if (nextValue > 0) {
-                List<List<Coin>> c = minPlan(copyCoins, nextValue);
+                List<List<Coin>> c = minPlan(tmpCoinPoints, nextValue);
                 if (c == null || c.isEmpty()) {
                     continue;
                 }
