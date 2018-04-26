@@ -105,3 +105,11 @@ grant select on table in schema xx to user;
     分析：1.1 获取索引pk_test的id=1的AccessShare的锁
          1.2 获取表test的的id=1的RowShare锁
          1.3 获取该条记录tuple的For Update行锁
+
+### 分区表使用总结
+    1. 创建函数create or replace function xx() return x(返回值，可以是void) as $name$
+       begin end; $name$ LANGUAGE 'plpgsql' VOLATILE;
+    2. 函数中循环记录
+       for r in (selct * from xxx) loop
+    3. 转义单引号，可以使用'''来实现单个单引号的转义
+    4. 在函数中可以使用execute来执行sql，这样就能对sql进行拼接了
