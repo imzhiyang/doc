@@ -36,3 +36,8 @@ npm config set registry http://registry.cnpmjs.org
 ### typescript中调用js的方法
     1. 由于js的引入属于全局库，所以在开头部分。declare var window: any;
     2. window.xxx就是对应的方法
+
+### 前后台部署的问题
+    1. 早前java和view是放在一起开发，如果没有一起部署的话，但是这样会有跨域问题；
+    解决方法：在nginx下面，使用端口一样的，但是location不一样的访问配置，这样就能解决。
+    如server{location / {bms} location /view/ {root dir}}
