@@ -113,3 +113,8 @@ grant select on table in schema xx to user;
        for r in (selct * from xxx) loop
     3. 转义单引号，可以使用'''来实现单个单引号的转义
     4. 在函数中可以使用execute来执行sql，这样就能对sql进行拼接了
+
+### zhparser扩展使用
+    1. select ts_token_type('xxconfigname(如)'); // 支持多少种分词形式
+    2. ALTER TEXT SEARCH CONFIGURATION testzhcfg ADD MAPPING FOR n,v,a,i,e,l WITH simple;//设置搜索配置的分词形式。
+    3. SELECT to_tsvector('testzhcfg','阿弟仔'); // 按对应的分词来分割

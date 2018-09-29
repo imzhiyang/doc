@@ -41,3 +41,9 @@ npm config set registry http://registry.cnpmjs.org
     1. 早前java和view是放在一起开发，如果没有一起部署的话，但是这样会有跨域问题；
     解决方法：在nginx下面，使用端口一样的，但是location不一样的访问配置，这样就能解决。
     如server{location / {bms} location /view/ {root dir}}
+
+### package-lock.json
+    npm install情况下来下载对应的js库
+    ^符号是在大版本号不变的情况，更新下载新版本的Js，如jquery: ^1.6.2，如果有1.7.1也会被下载
+    ~符号是下载最小最版本号的最新版本，如jquery ~1.6.2，会下载1.6.8
+    package-lock.json就是在npm install，将所下载的js及其下载源、签名都做了记录，以防到新环境的时候，会导致了下载了其它版本的js。

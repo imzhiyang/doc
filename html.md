@@ -8,7 +8,7 @@
     延伸问题：
     1. <input id="pageId" value="${pageId}"/>
     alert($("#pageId").val()); // alert("<script>123</script>");
-    alert("${pageId?xhmtl}"); // alert("&lt;script&gt;123..."); 有转义的字符
+    alert("${pageId?xthml}"); // alert("&lt;script&gt;123..."); 有转义的字符
     2. 所以如果在js中想获取转义后的html，可以类似下面操作
        <script>
            var div = document.createElement("div");
