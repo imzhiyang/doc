@@ -1,0 +1,1 @@
+1. 如果将所有校验都放入service中(accountService)，那么其它使用到的地方（accountService.add中有校验应用有效性），也会连带使用了，那么就必须处理这个错误，这样的处理是合理的吗？？
