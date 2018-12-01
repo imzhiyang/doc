@@ -43,6 +43,12 @@
    2. persist_sequence(持久化顺序)
    3. ephemeral(临时)，关闭客户端自动删除，也可手动删除。不能创建子节点
    4. ephemeral_sequence(临时顺序)
+
+### Zookeeper分布式锁
+   1. 创建ephemeral_sequence有序节点，
+   2. 判断当前结点是不是最小的节点，如果是获取锁。监听当前节点的上一个节点。直到监听上一个节点了，接下去就得到锁
+
+   创建ephemeral_sequence,以防客户端连接挂掉，导致节点没有删除，而出现死锁
 ### myid找不到问题处理
    在data目录新建myid文件并写入内容(server.x中的x值)
 ### stat not in white-lists
