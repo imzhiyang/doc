@@ -9,7 +9,22 @@
 	    3. jar -xvf xx.jar 会将jar解压出来
 	    4. jar -uxf xxx.jar xxx 会将xxx更新到xxx.jar的里面。但是这里有个问题，这样会把xxx的内容进行压缩(DEFLATED)，但是Spring boot启动的需要没有压缩的情况才行
 	    5. jar -uxf0（这个是阿拉伯数字0） xxx.jar xxx 这样就是没有压缩状态下，这样重新打包后的jar才能运行
+	
+	利用jar进行打包
+		1. jar -cvf0 test.jar ./ 把当前目录的所有文件都打入jar，但是运行的时候，却报“中没有主清单属性”。说明的运行的主文件没有被识别。查看打包过程中，出现了“正在忽略条目META-INF/”。
+		2. jar -cvfm0 test.jar xxx.mf文件 ./  这样即把main的执行文件清单打入，才行
 	    
 ### idea调试spring boot jar
 	1. idea新增jar application
      
+### spring bean
+	1. @Bean 属于factory的来生成bean
+	2. @Service、@Component这种注解都属于普通的来生成bean，
+	3. @Bean的优先级会高于@Service等，所以会出现@Bean覆盖@Service的BeanDefinition
+		3.1 ClassPathBeanDefinitionScanner doScan 会根据目录的排序，扫描注册所有的类
+		3.2 ConfigurationClassBeanDefinitionReader loadBeanDefinitionsForConfigurationClass会加载@Bean、@ImportResource、@Import等类定义
+		3.3 所以才有了@Bean会把Service的类定义给覆盖
+	4. 待研究，先解析全局对bean的定义Definition，然后需要注解用到实例的时候，才进行bean的create。
+		4.1 如果scopeName是singleton，spring会在加载bean之后，直接先初始化实例到池中
+		4.2 如果scopeName是prototype，就不会预先定义(需要用到才new，所以不必预先生成对象池)
+
