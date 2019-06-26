@@ -118,3 +118,7 @@ grant select on table in schema xx to user;
     1. select ts_token_type('xxconfigname(如)'); // 支持多少种分词形式
     2. ALTER TEXT SEARCH CONFIGURATION testzhcfg ADD MAPPING FOR n,v,a,i,e,l WITH simple;//设置搜索配置的分词形式。
     3. SELECT to_tsvector('testzhcfg','阿弟仔'); // 按对应的分词来分割
+
+
+### 查看表文件和表文件位置
+	1. select pg_relation_filenode(''),pg_relation_filepath('')
