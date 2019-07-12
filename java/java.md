@@ -35,3 +35,8 @@
 	1. 会把response.appCommited设为true，这样在最后view.render的时候，会判断response是否已经提交或者关闭，采用了include的方式。
 	2. response.close也是同上的操作。
 	3. 如果通过response.setStatus，这时候又不去close response，就会导致forward view，然后status变成了404。如果302没有配套的location在responseHeader中，浏览器中不会做处理
+
+### spring boot的属性文件加载
+	1. 问题，在ai项目中，有三个mmc、mms、mmr三个module，这三个module有属性公用，比如数据库连接属性，redis属性，ccas、ppas、k8s等属性。但是每一个module都有一份相同属性配置的文件，没有把公共属性统一设置，线上需要对应修改三份属性
+	   解决方法：可通过spring boot的--sprint.config.location=xxx来使用公共属性文件。
+	2. 原理：spring boot会启动PropertySource(MapPropertySource location.properties)、PropertySource(MapPropertySource application.properties)。这样spring.config.location的内容会比外面来得高

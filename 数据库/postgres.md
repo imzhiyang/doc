@@ -122,3 +122,11 @@ grant select on table in schema xx to user;
 
 ### 查看表文件和表文件位置
 	1. select pg_relation_filenode(''),pg_relation_filepath('')
+
+### 查看表有没有执行auto_analyse
+	1. pt_stat_all_tables;
+		1.1 n_mod_since_analyse 上一次analyse之后，当前更新或者执行了多少条
+
+### 表的计划执行
+	1. 从pg_class中获取总页数和总条数,relpages、reltuples
+	2. pg_stats(pg_statistic的视图，更加安全),histogram_bounds(直方图)，num_distinct(如果>0,表示有多少种值、如果为-1，表示值唯一，其它负值表示值的个数/行数 * -1)。most_coomon_vals(MCV最常出现的值，一般与num_distinct来混合使用),most_common_freqs(MCV出现的概率)
