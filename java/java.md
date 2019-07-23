@@ -40,3 +40,37 @@
 	1. 问题，在ai项目中，有三个mmc、mms、mmr三个module，这三个module有属性公用，比如数据库连接属性，redis属性，ccas、ppas、k8s等属性。但是每一个module都有一份相同属性配置的文件，没有把公共属性统一设置，线上需要对应修改三份属性
 	   解决方法：可通过spring boot的--sprint.config.location=xxx来使用公共属性文件。
 	2. 原理：spring boot会启动PropertySource(MapPropertySource location.properties)、PropertySource(MapPropertySource application.properties)。这样spring.config.location的内容会比外面来得高
+
+### jvm垃圾回收
+	1. 验证parallel Scanvenge回收器中的GCTimeRatio的含义
+	2. 垃圾回收打印的一些关键字(Allocation Failure 没有空间可分配了 Ergonomics开启了UseAdaptiveSizePolicy而触发的Full GC)
+
+### JVM 内存分析
+	1. 程序计数器，每个线程独立
+		记录当前解释执行的程序指令(读取方法区中的那些字节码指令，比如第n条是aload2)
+	2. 栈，线程独立 -Xss来设置
+		存储每个执行的变量栈
+	3. 堆(共用) -Xms -Xmx来指定最大和最小(一般两个值设置一样，防止在垃圾回收的时候，引起堆内存的重新分配)
+		动态对象的分配内存,经常说的垃圾回收，一般就是指这个区(Eden、From、To，-Xmn来指定年轻代大小，由于采用复制拷贝，所以from和to只有一个会拿来使用,-XXNewRatio,默认为2，表示新生代占1/(1+2)),
+	4. 方法区
+		存储常量(final)、静态(static)、类信息描述等一些常量信息
+		4.1 运行时方法区(字面量和符号引号，字面量就是一些值(1、2、"123"等)，符号引用就是在生成字节码的时候，类还没有分配内存，无法找到对应的类，而将一些类名统一用一些符号来表示)
+
+### java类加载器
+	同一个类名通过不同的类加载器加载，那么出来的Class的值是不一样的
+	1. 加载，将字节码加载
+	2. 连接
+		2.1 验证 验证字节码是否有效
+		2.2 准备，为final、static等变量分配空间，为方法区的分配空间
+		2.3 解析，替换符号引用为对应的类指针(准备已经分配了指针)
+	3. 初始化（init、cinit静态块）
+	4. 使用
+	5. 卸载
+
+### 工作内存与主内存
+	1. 工作内存就是在线程中，普通变量就是通过主内存读取(read)，然后加载到工作内存(load)中，或者通过assign（进行初始值），之后才能进行(use、store)
+	
+### synchronized与Reentrantlock
+	1. 同样可以对内存进行同步加锁，但是lock需要手动release
+	2. synchoronized是非公平，lock可以使用公平(默认不公平)
+	3. wait、notify问题(synchronized需要多个对象，lock只需要newConditio后得到的condition，condition.wait和notify)
