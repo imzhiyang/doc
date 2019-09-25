@@ -30,9 +30,13 @@ grant select on table in schema xx to user;
 ### 表记录的事务id查看
     select ctid,xmin,xmax,cmin,cmax from table
     ctid:物理位置
-    xmin:插入事务的id
-    xmax:同一条事务的第几条命令
-    cmin:删除的事务id
+    xmin:插入事务的id         --- 是否就是用于事务隔离级别时，对应的数据获取，比如要大于                       
+						     --- xmin的记录
+    xmax:删除的事务id
+    cmin:插入的事务的第几条指令 --- xmax为0，表示插入的事务id，下的第几条指令。
+	                         --- xmax不为0
+	                             cmin和cmax为0，表示该条记录有效，应该是在事务触发了删除，但是回滚了
+                                 cmin和cmax不为0，表示该条记录为删除
     cmax:删除的事务的第几条指令
 
 
