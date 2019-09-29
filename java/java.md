@@ -74,3 +74,16 @@
 	1. 同样可以对内存进行同步加锁，但是lock需要手动release
 	2. synchoronized是非公平，lock可以使用公平(默认不公平)
 	3. wait、notify问题(synchronized需要多个对象，lock只需要newConditio后得到的condition，condition.wait和notify)
+	4. synchoronized是可重入锁，ReentrantLock可重入锁
+	5. 自选锁，是循环等待锁的获取，
+
+### jvm的内存分配
+	1. 内存回收
+		1.1 GCRoot是本地变量表，静态变量表，常量变量表，native变量表
+		1.2 当需要一次GC的时候，每一段代码都有自己的oopmap，这样就方便逆向去查找对应的GCRoots，不需要查找整个GCRoots
+		1.3 GCRoot完，eden会进入到old
+	2. String
+		2.1 String str = "123"; String str1= new String("12") + new String("3");
+			str1.intern(); 那么str1==str1.inern()吗？ 答案是false，因为123已经在常量池，str1.intern()，只会返回已有的常量池"123"，所以不相等
+		2.2 String str = new String("12") + new String("3"); 那么str==str.intern()，答案是对的，因为intern是将串拷贝到常量池，也只是将引用拷贝过去，所以两者是相等
+
