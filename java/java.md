@@ -87,3 +87,6 @@
 			str1.intern(); 那么str1==str1.inern()吗？ 答案是false，因为123已经在常量池，str1.intern()，只会返回已有的常量池"123"，所以不相等
 		2.2 String str = new String("12") + new String("3"); 那么str==str.intern()，答案是对的，因为intern是将串拷贝到常量池，也只是将引用拷贝过去，所以两者是相等
 
+### jdk1.8 tomcat的x-forward-protol失败
+	1.问题原因应该是没有配置internalProxies代理信任，所以无法设置schema，添加了internalProxies之后，就能够根据ip地址来设置了
+

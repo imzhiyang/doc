@@ -132,9 +132,20 @@ grant select on table in schema xx to user;
 		1.1 n_mod_since_analyse 上一次analyse之后，当前更新或者执行了多少条
 
 ### 表的计划执行
-	1. 从pg_class中获取总页数和总条数,relpages、reltuples
+	1. 从
+	2. 
+	3. pg_class中获取总页数和总条数,relpages、reltuples
 	2. pg_stats(pg_statistic的视图，更加安全),histogram_bounds(直方图)，num_distinct(如果>0,表示有多少种值、如果为-1，表示值唯一，其它负值表示值的个数/行数 * -1)。most_coomon_vals(MCV最常出现的值，一般与num_distinct来混合使用),most_common_freqs(MCV出现的概率)
 
 ### 升级sql，数据太多更新，导致auto_vacuum的执行，导致刷库变慢
 	1. 修改postgresql.conf，将autovacuum=off
 	2. 通过psql -U postgres -c "select pg_reload_conf()" 来重新加载配置，不用关闭数据库
+
+### 线上You might need to increase max_locks_per_transaction.
+	1. 共享锁记录的大小是max_locks_per_transaction(64)*(max_connections(线上是:1500) + max_prepared_transactions(0))=96000.这里是总共96000的slot锁槽，每个锁槽是270Byte，所以可以使用96000*270=25.920M。在查询的时候，所加入的共享锁数量*需要占用的空间，就是所需要的锁空间，但是目前使用一个表多少空间的量还不知道怎么去衡量
+	2. 视频由于数据量大做了分表优化，爱奇艺提供商是以分类做为分表条件。
+	3. 在未去掉分类，总共有70个分类，所以爱奇艺应用读取视频，数量达到了70张分表数据，所以并发查询就是96000/(70+1(video)+2(video_lib_video,video_lib_video分表)+1(classify)+1(provider))=96000/75=1280。在并发达到1280之后，就会出现out of shared memory
+	4. 整理完分类之后，总共还剩下45个分类。所以爱奇艺应用读取视频，数量达到了45张分表数据，所以并发查询就是96000/(45+1(video)+2(video_lib_video,video_lib_video分表)+1(classify)+1(provider))=96000/50=1920。在并发达到1920之后，就会出现out of shared
+	5. 上面3和4的计算是错误，共享锁的数量是一张表再加上这张表的所有索引，而且是所有分表进行查询，不是简单的一个表而已。
+	6. 是使用(表+主键索引)*表数+(15,16,17)(系统表,pg_class等)
+	7. shared_buffers，用于缓存数据的内存大小;effective_cache_size，一个查询可使用的最大内存，通shared_buffers不一样。
