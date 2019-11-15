@@ -38,7 +38,7 @@
 
 ### spring boot的属性文件加载
 	1. 问题，在ai项目中，有三个mmc、mms、mmr三个module，这三个module有属性公用，比如数据库连接属性，redis属性，ccas、ppas、k8s等属性。但是每一个module都有一份相同属性配置的文件，没有把公共属性统一设置，线上需要对应修改三份属性
-	   解决方法：可通过spring boot的--sprint.config.location=xxx来使用公共属性文件。
+	   解决方法：可通过spring boot的--spring.config.location=xxx来使用公共属性文件。
 	2. 原理：spring boot会启动PropertySource(MapPropertySource location.properties)、PropertySource(MapPropertySource application.properties)。这样spring.config.location的内容会比外面来得高
 
 ### jvm垃圾回收
@@ -90,3 +90,30 @@
 ### jdk1.8 tomcat的x-forward-protol失败
 	1.问题原因应该是没有配置internalProxies代理信任，所以无法设置schema，添加了internalProxies之后，就能够根据ip地址来设置了
 
+### 数据库多源的配置框架改造
+	1. 背景：如果数据库中只配置了源，但是响应一直无法提升。瓶颈在数据库层面，所以考虑是否引入读写分离，从而思考能不能使得这个数据源能够更加人性化
+		1.1 本来还想引入使用情况的检测，比如当前服务器最多16CPU，目前已经开启了16个连接，这时候可以采用其它数据源，就是使用尽量空闲的资源。目前只是使用随机分配
+		1.2 既然引入了多数据源，那么原先在后台页面这些操作，必然应该使用主库，只有在接口层使用的时候才需要采用备的数据库点进行查询，于是采用aop，检测所有service的方法，是否有transaction的注解，然后进行源的选择，有DataSourceSelect注解则是只读，否则就是注
+		1.3 上一步中涉及到一个问题，如果重复进入，如何计算最后是退出的状态，不需要重复选择源的问题，所以就有一个层次计数，进入一次加1，退出则剑1，直到为0，则表示退出，要把源关闭
+	2. 多数据源的配置，前面是统一在cms.xml中配置好所有datasource，然后注解给MultiDataResourcePool，但是这样就显得文件很臃肿，扩展性又不强
+		2.1 针对2中的问题，考虑如何能够动态扩展，于是将datasource的添加，到java文件去new对象，但是这里碰到一个问题，druid的后台监控，没有办法找到这个new出来的资源。
+		2.2 针对上面的问题，采用的解决方案，以为将new出来的对象，直接register到BeanFactory，但是怎么获取BeanFactory有出现问题了
+		2.3 针对2.2的情况，采用了bean配置中的scope=prototype，多实例，这个默认就是在beanFactory加入定义，但是不会马上新建实例，只有等到需要用的时候才会去建实例。延伸看到了parent，parent就是定义出一些公共属性，后面bean的创建直接继承这些属性即可。
+
+### 单例模式
+	1. 饿汉(一开始就实例化了属性)
+	2. 懒汉(属性不初始化，等到要用才初始化)
+	3. synchronized(等到要用的时候，还判断一下线程安全)
+	4. 枚举类
+
+### Transaction事务传递
+	1. NOT SUPPORT，不支持事务，一般用于查询，并要设置readOnly=true，否则在事务结束之后，会自动进行commit
+	2. REQUIRED	事务传递
+	3. REQUIRED_NEW 新事务
+	4. MANDATORY   在事务中，但是不能主动创建
+	5. NEVET  不能有事务
+	6. NEST   嵌套事务，如果此类发生异常，则不进行回退
+
+	7 如果先是NOT SUPPORT接着再是REQUIRE的话，会是怎么一个流程？
+		7.1 两者之间互调，会将事务进行supend(挂起)，区别是NOT SUPPORT的事务被挂起，会导致连接直接释放，而REQUIRED的则不是释放连接
+		7.2 NOT SUPPORT不会开启事务，那么表示也就不会直接开启dbConnection，其开启hibernate的session是在SpringSessionContext的currentSession()方法中进行开启，同时向TransactionSynchronizationManager注册一个SpringSessionSynchronization对象。这样就在suspend事务中，会对connection进行回收关闭

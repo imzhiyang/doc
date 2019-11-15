@@ -58,3 +58,23 @@
    1. 在consumer.xml和provider.xml中添加<dubbo:monitor protocol="registry"/>。这是通过注册中心去同步monitor
    2. consumer在调用provider中的服务时，通过invoker中添加了MonitorFilter（由url中是否带有参数monitor）
    3. monitor在收集数据，一段周期后，通过consumer与provider的调用形式，上报给monitor
+
+### 问题
+	1.说一下dubbo的实现过程？？注册中心挂了可以继续通信么？？
+		1.1 dubbo provider往注册中心注册服务
+		1.2 dubbo customer从注册中心同步服务
+		1.3 如果注册中心断之前，custom已经有同步下来的provider，custom与provider直接进行通讯
+	2.Zk原理知道吗？Zk都可以干什么？？Paxos算法知道吗？？说一下原理和实现？？
+	3.Dubbo支持哪些序列号协议？？Hessian？？说一下hession的数据结构？？PB知道吗？？为啥PB效率是最高的？？
+		3.1 dubbo
+		
+	4.知道netty么？？Netty可以干嘛啊？？NIO, BIO, AIO都是什么啊？有什么区别么？
+		4.1 类似tomcat，可以用于连接管理
+		4.2 NIO就是非阻塞型IO，不会等待连接，而是通过轮询通道，如果通道有事件，再根据对应的事件分发处理
+			BIO阻塞性IO，等待连接，如果此时没有连接，则挂起等待
+	5.Dubbo复制均衡策略和高可用策略都有哪些？？动态代理策略呢？？
+
+	6.为什么要进行系统拆分啊？？拆分不用dubbo可以吗？？Dubbo和thrift什么区别？？
+		6.1 为了让系统能够更加精简运行，比如多固件运行部署，就不会互相影响
+	7.Mq相关？
+		7.1 消息队列
