@@ -59,3 +59,13 @@
         @Join(video_id)
         VideoEntity video;
     }
+
+### hibernate对象状态
+	在cms中存在这样的问题，在代码中有使用@Transaction(propagation=NOT_SUPPORT)的方式，这样就会造成调用该方法和saveOrUpdate的方法不是在一个session里面，而其它session又有可能执行了数据的获取，很容易造成一个id在session中有两个实体读取
+	1. 临时态，一个new的实体，可通过persist、save、saveOrUpdate，状态持久态，没有id值都是临时态，否则都是游离态
+	2. 持久态（可通过saveOrUpdate、update（将对象强制刷入）、merge(合并已有对象，并返回session的对象)将一个临时态对象转为持久态）
+	3. 游离态，不在session状态下，调用了evit、clear等方法，saveOrUpdate、merge、update
+	4. 删除态，调用了delete方法
+	cms中碰到一个问题：
+	1. 在ResolutionService.delete，调用了entryService.find（注意这里的find是NOT_SUPPORT，也就是会重新开一个session去获取entry），然后遍历对象调用entryService.delete，多次调用这个ResolutionService.delete方法，导致同一个id会在delete session中存在。
+	2. 因为在调用了hibernate的delete，后续所有针对该id对象的获取都会被识别为删除态，所以就会标识为空，

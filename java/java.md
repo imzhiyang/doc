@@ -117,3 +117,14 @@
 	7 如果先是NOT SUPPORT接着再是REQUIRE的话，会是怎么一个流程？
 		7.1 两者之间互调，会将事务进行supend(挂起)，区别是NOT SUPPORT的事务被挂起，会导致连接直接释放，而REQUIRED的则不是释放连接
 		7.2 NOT SUPPORT不会开启事务，那么表示也就不会直接开启dbConnection，其开启hibernate的session是在SpringSessionContext的currentSession()方法中进行开启，同时向TransactionSynchronizationManager注册一个SpringSessionSynchronization对象。这样就在suspend事务中，会对connection进行回收关闭
+### 字符集编码
+	1. ascii，一个字节，只能表示127字符
+	2. gbk，两个字节，可以用于表示大部分的中文
+	3. unicode，国际统一字符，默认两个字节，在java中用"中".getBytes("unicode")的内容为0xFEFF 4e2d，0xFEFF是其的编码前缀，\u4e2d就能表示这个中字
+	4. utf-8，可变字节来存储(前n位多少个1表示多少字节，n+1为0，然后每8位开头都是10)
+		4.1 0xxxxxxx-0111111用于表示一个字节的内容
+		4.2 110xxxxx 10xxxxxx 用于表示两个字节
+		4.3 1110xxxx 10xxxxxx 10xxxxxx 用于表示3个字节的内容 
+
+### 线程
+	1. 守护线程，当java程序中没有用户线程，都是守护线程，则程序就会停止退出
