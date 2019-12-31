@@ -14,7 +14,13 @@
     3. 如果leader丢失，则备用节点升为leader
     4. 节点在回复，则重新注册一个node_00003,作为备用leader 
 ### leader选举过程 
-
+	1. 每个服务器都会自己投票，以(myid,zxid)的方式
+	2. 接收其它服务器的投票
+	3. 处理投票
+		3.1 优先检查zxid，zxid大的做为leader
+		3.2 比较myid，myidda的为leader
+	4. 统计投票，查看投票过半的选举为leader
+	5. 更新状态，如果为follower，则为FOLLOWING；如果为Leader，则为Leading
 ### 客户端对serverList的轮询机制
     1. startTime与warmup时间，
     2. 根据weight
@@ -27,6 +33,7 @@
 ### 创建的临时节点什么时候会被删除，是连接一断就删除吗？延时是多少？
     立即删除的。 当客户端close之后，给zookeeper发完包，zookeeper马上response xid=-1表示事件通知
 ### 是否可以拒绝单个IP对ZK的访问,操作 
+	ACL单个ip配置
 
 ### ZooKeeper集群中服务器之间是怎样通信的？ 
 
