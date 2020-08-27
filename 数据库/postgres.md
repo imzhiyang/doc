@@ -148,3 +148,17 @@ grant select on table in schema xx to user;
 	5. 上面3和4的计算是错误，共享锁的数量是一张表再加上这张表的所有索引，而且是所有分表进行查询，不是简单的一个表而已。
 	6. 是使用(表+主键索引)*表数+(15,16,17)(系统表,pg_class等)
 	7. shared_buffers，用于缓存数据的内存大小;effective_cache_size，一个查询可使用的最大内存，通shared_buffers不一样。
+
+### 冻结
+    背景：由于事务id的设计最大只能有2的32次方，也就是40亿的数据，但是最大的事务间距(当前事务id与最老的事务id的差为autovacuum_freeze_max_age)20亿，比如当前事务id到了2^31+100，对于事务id(100)来说，还是可见的，但是事务id再往前+1(2^31+101)，那么对于xmin=100的元组却变成不可见了，这是无法允许的，所以这时候带来了冻结的概念
+    原理：有三个关键参数如下
+        vacuum_freeze_min_age: 5kw，用于元素是否进行冻结的判断，部分冻结，判断条件=(当前事务id -xminId是否大于vacuum_freeze_min_age，然后元组冻结，发送冻结的操作，是vacuum)
+        vacuum_freeze_table_age: 1.5亿，用于表是否进行部分冻结(判断条件=pgclass中frozenxid-当前事务id是否大于vacuum_freeze_table_age，如果满足了会算出limitXid(limitxid=当前事务id-vacuum_freeze_min_age)，然后更新pgclass中的frozenxid，接着将xmin小于limitXid的元组进行冻结，发送冻结操作vacuum)
+        autovacuum_freeze_max_age: 20亿，自动进行冻结回收，更新pg_class中relfrozenxid
+    方法：vacuum table;只进行回收，不更新pg_class的relfrozenxid
+          vacuum free table，更新pg_class的relfrozenxid
+    冻结的方案：在元素的t_infomask表示为0x0300
+    vacuum freeze table:会将当前table的所有元组进行冻结，然后更新pgclass的frozenxid为当前事务id
+    vacuum full table:会将当前table的所有元组进行冻结，然后更新pgclass的frozenxid为当前事务id
+    
+    
